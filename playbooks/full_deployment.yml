@@ -1,0 +1,15 @@
+---
+- name: install k3s
+  import_playbook: deploy_k3s.yml
+
+- name: Replace traefik helmchart
+  import_playbook: k3s_deploy_manifests.yml
+
+- name: set up dashboard
+  import_playbook: k3s_dashboard.yml
+
+- name: install cert-manager
+  import_playbook: k3s_cert-manager.yml
+
+- name: copy config
+  import_playbook: k3s_extras.yml

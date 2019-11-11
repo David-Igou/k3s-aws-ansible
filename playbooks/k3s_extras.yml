@@ -1,0 +1,11 @@
+- hosts: k3s_master
+  become: True
+  gather_facts: True
+  tasks:
+    - name: Download kubernetes config
+      fetch:
+        src: /etc/rancher/k3s/k3s.yaml
+        dest: "{{ playbook_dir }}/credentials/k3s.yaml"
+        flat: yes
+
+

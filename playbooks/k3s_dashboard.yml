@@ -1,0 +1,33 @@
+- hosts: k3s_master
+  become: True
+  gather_facts: True
+
+  tasks:
+    - name: Make sure destination dir exists
+      file:
+        path: /root/kubedeployments
+        state: directory
+
+    - name: Copy dashboard admin file
+      copy:
+        src: files/dashboard-admin.yaml
+        dest: /root/kubedeployments/dashboard-admin.yaml
+        mode: '0644'
+
+    - name: Apply dashboard admin
+      shell: "k3s kubectl apply -f /root/kubedeployments/dashboard-admin.yaml"
+
+    - name: Install dashboard
+      shell: "k3s kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.0-beta1/aio/deploy/recommended.yaml"
+
+    - name: Get dashboard token
+      shell: "k3s kubectl -n kube-system describe secret $(k3s kubectl -n kube-system get secret | grep admin-user | awk '{print $1}') | grep token: | cut -d':' -f2 | xargs"
+      register: dashboard_token
+
+    - debug:
+        msg: "{{ dashboard_token.stdout }}"
+
+    - name: Save dashboard token to credentials/dashboard_token
+      become: False
+      local_action: copy content={{ dashboard_token.stdout }} dest={{ inventory_dir }}/playbooks/credentials/dashboard_token
+

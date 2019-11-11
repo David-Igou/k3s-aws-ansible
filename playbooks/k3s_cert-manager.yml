@@ -1,0 +1,41 @@
+- hosts: k3s_master
+  become: True
+  gather_facts: True
+
+  tasks:
+    - name: Install cert-manager crds
+      shell: "k3s kubectl create namespace cert-manager"
+
+    - name: Install cert-manager
+      shell: "kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v0.11.0/cert-manager.yaml --validate=false"
+
+    - name: Make sure destination dir exists
+      file:
+        path: /root/kubedeployments
+        state: directory
+
+
+    - name: Copy clusterissuer manifests
+      copy:
+        src: files/cert-manager_clusterissuer_manifests.yml
+        dest: /root/kubedeployments/cert-manager_clusterissuer_manifests.yml
+        mode: '0644'
+
+    - name: Sleep 30s for pods to spin up
+      pause:
+        seconds: 30
+
+    - name: install clusterissuers
+      shell: "k3s kubectl apply -f /root/kubedeployments/cert-manager_clusterissuer_manifests.yml"
+
+    - name: wait for issuers to create
+      pause:
+        seconds: 30
+
+    - name: Get Clusterissuer status
+      shell: k3s kubectl describe clusterissuer
+      register: clusterissuer_status
+
+    - debug:
+        msg: "{{ clusterissuer_status.stdout }}"
+

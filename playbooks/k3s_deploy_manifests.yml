@@ -1,0 +1,15 @@
+- hosts: k3s_master
+  become: True
+  gather_facts: True
+  tasks:
+  - name: Copy over manifests 
+    copy:
+      src: "{{ item }}"
+      dest: /var/lib/rancher/k3s/server/manifests
+      mode: '0600'
+    with_fileglob:
+      - "{{ inventory_dir }}/manifests/*"
+
+  - name: Sleep 60s for rollout
+    pause:
+      seconds: 60
